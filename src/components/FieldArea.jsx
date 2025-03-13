@@ -7,7 +7,6 @@ const FieldArea = () => {
 
   const responseArr = useSelector((state) => state.fieldData);
 
-
   useEffect(() => {
     if (responseArr.length > 4) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,14 +28,30 @@ const FieldArea = () => {
             </p>
           );
         }
-        if (item.response && typeof item.response === "string") {
+
+        if (item.response && item.response.fileUrl) {
+          return (
+            <embed
+              className="mt-5 rounded-4xl"
+              key={index}
+              src={item.response.fileUrl}
+              width="80%"
+              height="600px"
+            />
+          );
+        } else if (item.response && item.response.errorUrl) {
+          return (
+            <p className="mt-5 text-[#ECECF1]" key={index}>
+              {item.response.errorUrl}
+            </p>
+          );
+        } else if (item.response && typeof item.response === "string") {
           return (
             <p className="mt-5 text-[#ECECF1]" key={index}>
               {item.response}
             </p>
           );
-        }
-        if (
+        } else if (
           item.response &&
           Array.isArray(item.response) &&
           item.response[0] !== null

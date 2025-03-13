@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setFieldData } from "../store/datastore/questionAndResponseSlice";
-import { useGetResponseQuery } from "../store/api/apiSlice";
+import {
+  useGetResponseQuery,
+  useGetFileResponseQuery,
+} from "../store/api/apiSlice";
 
 const SearchBox = () => {
   const [query, setQuery] = useState("");
   const [triggerQuery, setTriggerQuery] = useState("");
+  const [triggerFileQuery, setTriggerFileQuery] = useState("");
   const dispatch = useDispatch();
-  const [responseData, setResponseData] = useState(null);
 
   const handleChange = (event) => {
     setQuery(event.target.value);
@@ -17,7 +20,8 @@ const SearchBox = () => {
     if (event.key === "Enter" && query.trim()) {
       const question = query.trim();
       dispatch(setFieldData({ question }));
-      setTriggerQuery(question);
+      if (question.includes("file")) setTriggerFileQuery(question);
+      else setTriggerQuery(question);
       setQuery("");
     }
   };
@@ -28,27 +32,55 @@ const SearchBox = () => {
     isLoading,
   } = useGetResponseQuery(triggerQuery, {
     skip: !triggerQuery,
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const {
+    data: fileData,
+    error: errorFileData,
+    isLoading: isFileLoading,
+  } = useGetFileResponseQuery(triggerFileQuery, {
+    skip: !triggerFileQuery,
+    headers: {
+      Accept: "application/pdf",
+    },
   });
 
   useEffect(() => {
     if (!isLoading && data) {
-      setResponseData(data.response);
+      setTimeout(() => {
+        dispatch(setFieldData({ response: data.response }));
+      }, 500);
     }
-  }, [data, isLoading]);
+  }, [data, isLoading, dispatch]);
 
   useEffect(() => {
     if (!isLoading && errorData?.data?.response) {
-      setResponseData(errorData.data.response);
-    }
-  }, [errorData, isLoading]);
-
-  useEffect(() => {
-    if (responseData) {
       setTimeout(() => {
-        dispatch(setFieldData({ response: responseData }));
+        dispatch(setFieldData({ response: errorData.data.response }));
       }, 500);
     }
-  }, [responseData, dispatch]);
+  }, [errorData, isLoading, dispatch]);
+
+  useEffect(() => {
+    if (!isFileLoading && fileData) {
+      setTimeout(() => {
+        dispatch(setFieldData({ response: { fileUrl: fileData } }));
+      }, 500);
+    }
+  }, [isFileLoading, fileData, dispatch]);
+
+  useEffect(() => {
+    if (!isFileLoading && errorFileData) {
+      setTimeout(() => {
+        dispatch(
+          setFieldData({ response: { errorUrl: "error while loading file" } })
+        );
+      }, 500);
+    }
+  }, [isFileLoading, errorFileData, dispatch]);
 
   return (
     <div className="w-full fixed bottom-0 box-border bg-[#202123]">

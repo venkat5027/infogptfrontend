@@ -14,7 +14,18 @@ export const apiSlice = createApi({
         method: "GET",
       }),
     }),
+    getFileResponse: builder.query({
+      query: (question) => ({
+        url: `${INFO_URL}?qst=${encodeURIComponent(question)}`,
+        method: "GET",
+        responseHandler: async (response) => {
+          const blob = await response.blob();
+          return URL.createObjectURL(blob);
+        },
+        cacheResponse: false,
+      }),
+    }),
   }),
 });
 
-export const { useGetResponseQuery } = apiSlice;
+export const { useGetResponseQuery, useGetFileResponseQuery } = apiSlice;
